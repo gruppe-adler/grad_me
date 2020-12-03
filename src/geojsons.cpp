@@ -64,25 +64,28 @@ void writeLocations(const std::string& worldName, std::filesystem::path& basePat
     }
 }
 
-void normalizePolygon(nl::json::array& arrPtr)
+void normalizePolygon(nl::json& arr)
 {
-    // make sure the first point is also the last point
-    std::vector<float_t> first = *arrPtr.at(0);
-    std::vector<float_t> last = *arrPtr.at(*arrPtr.size() - 1);
-    if (first == last) {
-        coordArr.push_back(first);
-    }
+    if (arr.is_array()) {
 
-    // make sure the winding order is counterclockwise
-    // https://stackoverflow.com/a/1165943
-    auto sum = 0.0f;
-    for (auto i = 1; i < *arrPtr.size(); i++) {
-        std::vector<float_t> p1 = *arrPtr.at(i - 1);
-        std::vector<float_t> p2 = *arrPtr.at(i);
-        sum += (p2[0] - p1[0]) * (p2[1] + p1[1]);
-    }
-    if (sum > 0.0f) {
-        std::reverse(std::begin(*arrPtr), std::end(*arrPtr));
+        // make sure the first point is also the last point
+        std::vector<float_t> first = arr.at(0);
+        std::vector<float_t> last = arr.at(arr.size() - 1);
+        if (first == last) {
+            coordArr.push_back(first); // <-- ???
+        }
+
+        // make sure the winding order is counterclockwise
+        // https://stackoverflow.com/a/1165943
+        auto sum = 0.0f;
+        for (auto i = 1; i < arr.size(); i++) {
+            std::vector<float_t> p1 = arr.at(i - 1);
+            std::vector<float_t> p2 = arr.at(i);
+            sum += (p2[0] - p1[0]) * (p2[1] + p1[1]);
+        }
+        if (sum > 0.0f) {
+            std::reverse(arr.begin(), arr.end());
+        }
     }
 }
 
@@ -103,7 +106,7 @@ void writeHouses(grad_aff::Wrp& wrp, std::filesystem::path& basePathGeojson, std
             coordArr.push_back(std::vector<float_t> { mapInfo4Ptr->bounds[4], mapInfo4Ptr->bounds[5] });
             coordArr.push_back(std::vector<float_t> { mapInfo4Ptr->bounds[0], mapInfo4Ptr->bounds[1] });
 
-            normalizePolygon(&coordArr)
+            normalizePolygon(coordArr);
 
             auto outerArr = nl::json::array();
             outerArr.push_back(coordArr);
@@ -474,7 +477,7 @@ void writeRoads(grad_aff::Wrp& wrp, const std::string& worldName, std::filesyste
                 geometry["coordinates"][0].push_back(points);
             }
 
-            normalizePolygon(&(geometry["coordinates"][0]))
+            normalizePolygon(geometry["coordinates"][0]);
 
             addtionalRoadJson["geometry"] = geometry;
             addtionalRoadJson["properties"] = nl::json::object();
@@ -619,7 +622,7 @@ nl::json buildRunwayPolygon(sqf::config_entry& runwayConfig) {
     coordArr.push_back({ endPos[0] + px, endPos[1] + py });
     coordArr.push_back({ startPos[0] + px, startPos[1] + py });
 
-    normalizePolygon(&coordArr)
+    normalizePolygon(coordArr);
 
     auto outerArr = nl::json::array();
     outerArr.push_back(coordArr);
