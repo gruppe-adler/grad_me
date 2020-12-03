@@ -71,8 +71,8 @@ void normalizePolygon(nl::json& arr)
         // make sure the first point is also the last point
         std::vector<float_t> first = arr.at(0);
         std::vector<float_t> last = arr.at(arr.size() - 1);
-        if (first == last) {
-            coordArr.push_back(first); // <-- ???
+        if (first != last) {
+            arr.push_back(first);
         }
 
         // make sure the winding order is counterclockwise
